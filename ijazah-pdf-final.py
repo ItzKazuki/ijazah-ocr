@@ -20,7 +20,14 @@ if debug and not os.path.exists(output_folder):
     os.makedirs(output_folder)
 
 # Set path untuk Tesseract
-pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
+# pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract' 
+# TODO: Uncomment and set the correct path for Tesseract when use another platform like Windows or MacOS
+
+
+# ====== Cek apakah file PDF ada ======
+if not os.path.exists(pdf_path):
+    print(f"File PDF tidak ditemukan: {pdf_path}")
+    sys.exit(1)
 
 # ====== STEP 1: Convert PDF page ke gambar ======
 try:
@@ -84,3 +91,5 @@ if not debug:
                 os.remove(f)
             except Exception as e:
                 print(f"Gagal menghapus file {f}: {e}")
+
+# ====== Selesai ======
