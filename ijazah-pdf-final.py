@@ -48,7 +48,7 @@ page2_image.save(page2_image_path, 'PNG')
 image = cv2.imread(page2_image_path)
 
 # Crop
-x, y, w, h = 1050, 300, 900, 500
+x, y, w, h = 1050, 340, 900, 500
 cropped_image = image[y:y+h, x:x+w]
 cropped_path = os.path.join(output_folder, 'cropped_ijazah.png') if debug else 'cropped_ijazah.png'
 cv2.imwrite(cropped_path, cropped_image)
@@ -72,7 +72,7 @@ cleaned_path = os.path.join(output_folder, 'cleaned_image.png') if debug else 'c
 cv2.imwrite(cleaned_path, final_clean)
 
 # OCR
-custom_config = r'--oem 3 --psm 6 -c tessedit_char_whitelist= ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+custom_config = r'--oem 3 --psm 6 -l ind -c tessedit_char_whitelist= ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
 text = pytesseract.image_to_string(final_clean, config=custom_config)
 
 # Bersihkan teks hasil OCR
