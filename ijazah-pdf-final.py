@@ -72,7 +72,7 @@ cleaned_path = os.path.join(output_folder, 'cleaned_image.png') if debug else 'c
 cv2.imwrite(cleaned_path, final_clean)
 
 # OCR
-custom_config = r'--oem 3 --psm 6 -c tessedit_char_whitelist= ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+custom_config = r'--oem 3 --psm 6 -l ind -c tessedit_char_whitelist= ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
 text = pytesseract.image_to_string(final_clean, config=custom_config)
 
 # Bersihkan teks hasil OCR
