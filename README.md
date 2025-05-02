@@ -52,19 +52,26 @@ Proyek ini adalah sebuah script Python untuk melakukan OCR (Optical Character Re
 ## Cara Penggunaan
 
 ### 1. Instalasi
-Pastikan Anda memiliki Python 3.x terinstal di sistem Anda. Kemudian, instal semua dependensi yang diperlukan dengan perintah berikut:
-
-```bash
-pip install opencv-python pytesseract pdf2image
-```
-
-Selain itu, pastikan Anda telah menginstal Tesseract OCR di sistem Anda. Untuk pengguna Linux, Anda dapat menginstalnya dengan perintah:
+Pastikan Anda memiliki Python 3.x terinstal di sistem Anda. Kemudian, pastikan Anda telah menginstal Tesseract OCR di sistem Anda. Untuk pengguna Linux, Anda dapat menginstalnya dengan perintah:
 
 ```bash
 sudo apt update
 sudo apt install tesseract-ocr
 sudo apt install tesseract-ocr-ind # untuk bahasa indonesia
 ```
+
+> Pengguna Windows harus menginstall lewat package .exe
+
+Untuk Pengguna windows harus install beberapa aplikasi yang dibutuhkan seperti [Tesseract for Windows](https://github.com/tesseract-ocr/tesseract/releases) dan juga [Poppler for Windows](https://github.com/oschwartz10612/poppler-windows/releases)
+
+Jangan lupa tambahkan path tesseract dan poppler ke Environment Variable di windows agar poppler dan tesseract dapat di akses dimana saja.
+
+Lalu instal semua dependensi yang diperlukan dengan perintah berikut:
+
+```bash
+pip install opencv-python pytesseract pdf2image
+```
+
 
 ### 2. Eksekusi Script
 Jalankan script dengan memberikan file PDF sebagai argumen. Anda juga dapat menambahkan opsi `--debug` untuk menyimpan file sementara selama proses.

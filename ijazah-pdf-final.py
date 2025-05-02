@@ -1,3 +1,4 @@
+import shutil
 import cv2
 import pytesseract
 import re
@@ -22,6 +23,17 @@ if debug and not os.path.exists(output_folder):
 # Set path untuk Tesseract
 # pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract' 
 # TODO: Uncomment and set the correct path for Tesseract when use another platform like Windows or MacOS
+
+# cek apakah tesseract dan poppler terinstall dan terbaca di environment path
+# Cek apakah Tesseract terinstall
+if not shutil.which("tesseract"):
+    print("Tesseract tidak ditemukan di environment path. Pastikan Tesseract sudah terinstall.")
+    sys.exit(1)
+
+# Cek apakah Poppler terinstall
+if not shutil.which("pdftoppm"):
+    print("Poppler (pdftoppm) tidak ditemukan di environment path. Pastikan Poppler sudah terinstall.")
+    sys.exit(1)
 
 
 # ====== Cek apakah file PDF ada ======
