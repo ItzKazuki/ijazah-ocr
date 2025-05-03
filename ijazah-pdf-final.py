@@ -44,32 +44,32 @@ if not os.path.exists(pdf_path):
 # ====== STEP 1: Convert PDF page ke gambar ======
 try:
     images = convert_from_path(pdf_path, dpi=300)
-    if len(images) < 2:
+    if len(images) < 1:
         print("PDF hanya memiliki 1 halaman. Minimal butuh 2 halaman.")
         sys.exit(1)
-    page2_image = images[1]
+    page1_image = images[0]
 except Exception as e:
     print("Gagal membuka PDF:", e)
     sys.exit(1)
 
 # Simpan gambar halaman 2
-page2_image_path = os.path.join(output_folder, 'page2_temp.png') if debug else 'page2_temp.png'
-page2_image.save(page2_image_path, 'PNG')
+page1_image_path = os.path.join(output_folder, 'page1_temp.png') if debug else 'page1_temp.png'
+page1_image.save(page1_image_path, 'PNG')
 
 # ====== STEP 2: OCR processing ======
-image = cv2.imread(page2_image_path)
+image = cv2.imread(page1_image_path)
 
 # Crop
-x, y, w, h = 1050, 340, 900, 500
+x, y, w, h = 1100, 720, 400, 150
 cropped_image = image[y:y+h, x:x+w]
-cropped_path = os.path.join(output_folder, 'cropped_ijazah.png') if debug else 'cropped_ijazah.png'
+cropped_path = os.path.join(output_folder, 'cropped_surat-keputusan.png') if debug else 'cropped_surat-keputusan.png'
 cv2.imwrite(cropped_path, cropped_image)
 
 # Grayscale, Blur, Threshold
 gray = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
 blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-thresh_path = os.path.join(output_folder, 'thresh_ijazah.png') if debug else 'thresh_ijazah.png'
+thresh_path = os.path.join(output_folder, 'thresh_surat-keputusan.png') if debug else 'thresh_surat-keputusan.png'
 cv2.imwrite(thresh_path, thresh)
 
 # Bersihkan titik-titik kecil
@@ -84,11 +84,11 @@ cleaned_path = os.path.join(output_folder, 'cleaned_image.png') if debug else 'c
 cv2.imwrite(cleaned_path, final_clean)
 
 # OCR
-custom_config = r'--oem 3 --psm 6 -l ind -c tessedit_char_whitelist= ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+custom_config = r'--oem 3 --psm 6 -l ind -c tessedit_char_whitelist= 0123456789'
 text = pytesseract.image_to_string(final_clean, config=custom_config)
 
 # Bersihkan teks hasil OCR
-clean_text = re.sub(r'[^A-Za-z0-9\s]', '', text)
+clean_text = re.sub(r'[^0-9\s]', '', text)
 text_lines = [line.strip() for line in clean_text.splitlines() if line.strip()]
 text_json = json.dumps(text_lines, ensure_ascii=False, indent=4)
 
@@ -97,7 +97,7 @@ print(text_json)
 
 # ====== Hapus file jika tidak debug ======
 if not debug:
-    for f in [page2_image_path, cropped_path, thresh_path, cleaned_path]:
+    for f in [page1_image_path, cropped_path, thresh_path, cleaned_path]:
         if os.path.exists(f):
             try:
                 os.remove(f)

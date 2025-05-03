@@ -75,18 +75,22 @@ model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwrit
 # Buka gambar yang sudah dibersihkan
 final_image = Image.open(cleaned_path).convert("RGB")
 
-# Lakukan OCR
-pixel_values = processor(images=final_image, return_tensors="pt").pixel_values
-generated_ids = model.generate(pixel_values)
-text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+# Simpan gambar final ke folder "process" jika debug
+final_image_path = os.path.join(output_folder, 'final_image.png') if debug else 'final_image.png'
+final_image.save(final_image_path, 'PNG')
 
-# Bersihkan teks hasil OCR
-clean_text = re.sub(r'[^A-Za-z0-9\s]', '', text)
-text_lines = [line.strip() for line in clean_text.splitlines() if line.strip()]
-text_json = json.dumps(text_lines, ensure_ascii=False, indent=4)
+# # Lakukan OCR
+# pixel_values = processor(images=final_image, return_tensors="pt").pixel_values
+# generated_ids = model.generate(pixel_values)
+# text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
-# Output JSON
-print(text_json)
+# # Bersihkan teks hasil OCR
+# clean_text = re.sub(r'[^A-Za-z0-9\s]', '', text)
+# text_lines = [line.strip() for line in clean_text.splitlines() if line.strip()]
+# text_json = json.dumps(text_lines, ensure_ascii=False, indent=4)
+
+# # Output JSON
+# print(text_json)
 
 # ====== Hapus file jika tidak debug ======
 if not debug:

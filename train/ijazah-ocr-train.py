@@ -17,11 +17,17 @@ model.config.eos_token_id = processor.tokenizer.eos_token_id
 import pandas as pd
 df = pd.read_csv("labels.csv")
 
-def encode_example(example):
+def encode_example( ):
     image = Image.open(f"images/{example['filename']}").convert("RGB")
     pixel_values = processor(images=image, return_tensors="pt").pixel_values[0]
     labels = processor.tokenizer(example["text"], padding="max_length", max_length=128, truncation=True).input_ids
     labels = [l if l != processor.tokenizer.pad_token_id else -100 for l in labels]
+    
+    # Debugging: Print extracted values
+    print("Extracted pixel_values:", pixel_values.shape)
+    print("Original text:", example["text"])
+    print("Tokenized labels:", labels)
+    
     return {"pixel_values": pixel_values, "labels": torch.tensor(labels)}
 
 dataset = Dataset.from_pandas(df)
