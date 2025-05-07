@@ -5,74 +5,80 @@ import re
 import json
 import sys
 import os
+import numpy as np
 from pdf2image import convert_from_path
+from PIL import Image
 
-# ====== Cek input dari command line ======
-if len(sys.argv) < 2:
-    print("Usage: python mypy.py namafile.pdf [--debug]")
+# ====== Parse Arguments ======
+import argparse
+
+parser = argparse.ArgumentParser(description="OCR PDF Halaman ke-N dengan crop")
+parser.add_argument("pdf_path", help="Path ke file PDF")
+parser.add_argument("--debug", action="store_true", help="Aktifkan debug mode")
+parser.add_argument("--page", type=int, default=2, help="Halaman PDF yang akan diproses (mulai dari 1)")
+parser.add_argument("--crop", type=str, default="1050,340,900,500", help="Crop area dalam format: x,y,w,h")
+
+args = parser.parse_args()
+
+pdf_path = args.pdf_path
+debug = args.debug
+page_number = args.page
+crop_values = list(map(int, args.crop.split(',')))
+
+if len(crop_values) != 4:
+    print("Format --crop harus x,y,w,h (contoh: 1050,340,900,500)")
     sys.exit(1)
+x, y, w, h = crop_values
 
-pdf_path = sys.argv[1]
-debug = '--debug' in sys.argv
-
-# Buat folder "process" jika belum ada
-output_folder = 'process'
-if debug and not os.path.exists(output_folder):
-    os.makedirs(output_folder)
-
-# Set path untuk Tesseract
-# pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract' 
-# TODO: Uncomment and set the correct path for Tesseract when use another platform like Windows or MacOS
-
-# cek apakah tesseract dan poppler terinstall dan terbaca di environment path
-# Cek apakah Tesseract terinstall
-if not shutil.which("tesseract"):
-    print("Tesseract tidak ditemukan di environment path. Pastikan Tesseract sudah terinstall.")
-    sys.exit(1)
-
-# Cek apakah Poppler terinstall
-if not shutil.which("pdftoppm"):
-    print("Poppler (pdftoppm) tidak ditemukan di environment path. Pastikan Poppler sudah terinstall.")
-    sys.exit(1)
-
-
-# ====== Cek apakah file PDF ada ======
+# ====== Validasi ======
 if not os.path.exists(pdf_path):
     print(f"File PDF tidak ditemukan: {pdf_path}")
     sys.exit(1)
 
-# ====== STEP 1: Convert PDF page ke gambar ======
+if not shutil.which("tesseract"):
+    print("Tesseract tidak ditemukan di PATH")
+    sys.exit(1)
+
+if not shutil.which("pdftoppm"):
+    print("Poppler (pdftoppm) tidak ditemukan di PATH")
+    sys.exit(1)
+
+# ====== Buat folder debug jika perlu ======
+output_folder = "process"
+if debug and not os.path.exists(output_folder):
+    os.makedirs(output_folder)
+
+# ====== Convert PDF ke gambar ======
 try:
     images = convert_from_path(pdf_path, dpi=300)
-    if len(images) < 2:
-        print("PDF hanya memiliki 1 halaman. Minimal butuh 2 halaman.")
+    if len(images) < page_number:
+        print(f"PDF hanya memiliki {len(images)} halaman. Halaman {page_number} tidak tersedia.")
         sys.exit(1)
-    page2_image = images[1]
+    selected_image = images[page_number - 1]
 except Exception as e:
     print("Gagal membuka PDF:", e)
     sys.exit(1)
 
-# Simpan gambar halaman 2
-page2_image_path = os.path.join(output_folder, 'page2_temp.png') if debug else 'page2_temp.png'
-page2_image.save(page2_image_path, 'PNG')
+if debug:
+    selected_image_path = os.path.join(output_folder, f'page{page_number}.png')
+    selected_image.save(selected_image_path, 'PNG')
 
-# ====== STEP 2: OCR processing ======
-image = cv2.imread(page2_image_path)
+# ====== Konversi ke OpenCV dan proses gambar ======
+cv_image = cv2.cvtColor(np.array(selected_image), cv2.COLOR_RGB2BGR)
 
 # Crop
-x, y, w, h = 1050, 340, 900, 500
-cropped_image = image[y:y+h, x:x+w]
-cropped_path = os.path.join(output_folder, 'cropped_ijazah.png') if debug else 'cropped_ijazah.png'
-cv2.imwrite(cropped_path, cropped_image)
+cropped_image = cv_image[y:y+h, x:x+w]
+if debug:
+    cv2.imwrite(os.path.join(output_folder, 'cropped.png'), cropped_image)
 
-# Grayscale, Blur, Threshold
+# Grayscale, blur, threshold
 gray = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
 blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-thresh_path = os.path.join(output_folder, 'thresh_ijazah.png') if debug else 'thresh_ijazah.png'
-cv2.imwrite(thresh_path, thresh)
+if debug:
+    cv2.imwrite(os.path.join(output_folder, 'thresh.png'), thresh)
 
-# Bersihkan titik-titik kecil
+# Hapus noise kecil
 inverted = cv2.bitwise_not(thresh)
 contours, _ = cv2.findContours(inverted, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 clean = inverted.copy()
@@ -80,28 +86,16 @@ for cnt in contours:
     if cv2.contourArea(cnt) < 50:
         cv2.drawContours(clean, [cnt], -1, (0, 0, 0), thickness=cv2.FILLED)
 final_clean = cv2.bitwise_not(clean)
-cleaned_path = os.path.join(output_folder, 'cleaned_image.png') if debug else 'cleaned_image.png'
-cv2.imwrite(cleaned_path, final_clean)
+if debug:
+    cv2.imwrite(os.path.join(output_folder, 'clean.png'), final_clean)
 
-# OCR
+# ====== OCR ======
 custom_config = r'--oem 3 --psm 6 -l ind -c tessedit_char_whitelist= ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
 text = pytesseract.image_to_string(final_clean, config=custom_config)
 
-# Bersihkan teks hasil OCR
+# ====== Bersihkan dan cetak output ======
 clean_text = re.sub(r'[^A-Za-z0-9\s]', '', text)
 text_lines = [line.strip() for line in clean_text.splitlines() if line.strip()]
 text_json = json.dumps(text_lines, ensure_ascii=False, indent=4)
 
-# Output JSON
 print(text_json)
-
-# ====== Hapus file jika tidak debug ======
-if not debug:
-    for f in [page2_image_path, cropped_path, thresh_path, cleaned_path]:
-        if os.path.exists(f):
-            try:
-                os.remove(f)
-            except Exception as e:
-                print(f"Gagal menghapus file {f}: {e}")
-
-# ====== Selesai ======

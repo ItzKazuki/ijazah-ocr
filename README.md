@@ -83,7 +83,7 @@ python ijazah-pdf-final.py namafile.pdf
 
 Contoh dengan debug:
 ```bash
-python ijazah-pdf-final.py namafile.pdf --debug
+python ijazah-pdf-final.py namafile.pdf --page 2 --crop 950,297,1326,505 --debug
 ```
 
 ### 3. Output

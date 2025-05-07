@@ -1,3 +1,5 @@
 opencv-python
 pytesseract
 pdf2image
+pillow
+numpy
