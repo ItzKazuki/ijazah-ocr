@@ -98,7 +98,6 @@ text = pytesseract.image_to_string(final_clean, config=custom_config)
 clean_text = re.sub(r'[^A-Za-z0-9\s]', '', text)
 text_lines = [line.strip() for line in clean_text.splitlines() if line.strip()]
 
-print("=== Hasil OCR ===")
 # for line in text_lines:
 #     print(line)
 
